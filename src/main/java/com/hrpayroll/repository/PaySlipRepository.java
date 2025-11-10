@@ -10,5 +10,5 @@ import java.util.List;
 @Repository
 public interface PaySlipRepository extends JpaRepository<PaySlip, Long> {
     // Finds all payslips for a specific employee
-    List<PaySlip> findByEmployee_EmployeeId(Long employeeId);
+    List<PaySlip> findByEmployee_Id(Long employeeId);
 }

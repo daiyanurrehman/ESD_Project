@@ -37,6 +37,6 @@ public class AttendanceService {
     // Lecture 10: Read operation
     @Transactional(readOnly = true)
     public List<Attendance> getAttendanceByEmployeeAndDateRange(Long employeeId, LocalDate start, LocalDate end) {
-        return attendanceRepository.findByEmployee_EmployeeIdAndWorkDateBetween(employeeId, start, end);
+        return attendanceRepository.findByEmployee_IdAndWorkDateBetween(employeeId, start, end);
     }
 }

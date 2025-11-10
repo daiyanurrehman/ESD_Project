@@ -14,10 +14,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class Employee extends UserAccount { 
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long employeeId;
-
     private String firstName;
     private String lastName;
     
