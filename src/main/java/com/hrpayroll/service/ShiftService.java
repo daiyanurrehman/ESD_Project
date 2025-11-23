@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 // Lecture 9: Service for Shift Schedule business logic
 @Service
+@SuppressWarnings("null")
 public class ShiftService {
 
     private final ShiftScheduleRepository shiftScheduleRepository;
@@ -62,11 +63,11 @@ public class ShiftService {
     public ShiftScheduleDTO updateShift(Long id, ShiftSchedule shiftDetails) {
         ShiftSchedule shift = shiftScheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Shift not found with ID: " + id));
-        
+
         shift.setName(shiftDetails.getName());
         shift.setStartTime(shiftDetails.getStartTime());
         shift.setEndTime(shiftDetails.getEndTime());
-        
+
         ShiftSchedule updatedShift = shiftScheduleRepository.save(shift);
         return convertToDTO(updatedShift);
     }

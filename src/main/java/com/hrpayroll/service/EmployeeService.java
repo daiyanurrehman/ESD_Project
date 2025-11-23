@@ -10,6 +10,7 @@ import java.util.List;
 
 // Lecture 4: @Service for employee management business logic
 @Service
+@SuppressWarnings("null")
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
@@ -39,18 +40,18 @@ public class EmployeeService {
         // Here you would add validation logic (Lecture 8 concept)
         return employeeRepository.save(employee);
     }
-    
+
     // Lecture 10: Write operation - Ensures update is atomic
     @Transactional
     public Employee updateEmployee(Long id, Employee employeeDetails) {
         Employee employee = findEmployeeById(id);
-        
+
         // Update fields (example of partial update/PUT logic)
         employee.setFirstName(employeeDetails.getFirstName());
         employee.setLastName(employeeDetails.getLastName());
         employee.setDepartment(employeeDetails.getDepartment());
         employee.setJobTitle(employeeDetails.getJobTitle());
-        
+
         return employeeRepository.save(employee);
     }
 

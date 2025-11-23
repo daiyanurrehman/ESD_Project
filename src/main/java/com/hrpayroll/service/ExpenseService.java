@@ -16,14 +16,15 @@ import java.util.stream.Collectors;
 
 // Lecture 9: Service for Expense Claim business logic
 @Service
+@SuppressWarnings("null")
 public class ExpenseService {
 
     private final ExpenseClaimRepository expenseClaimRepository;
     private final EmployeeRepository employeeRepository;
 
     @Autowired
-    public ExpenseService(ExpenseClaimRepository expenseClaimRepository, 
-                          EmployeeRepository employeeRepository) {
+    public ExpenseService(ExpenseClaimRepository expenseClaimRepository,
+            EmployeeRepository employeeRepository) {
         this.expenseClaimRepository = expenseClaimRepository;
         this.employeeRepository = employeeRepository;
     }
@@ -47,7 +48,7 @@ public class ExpenseService {
     public List<ExpenseClaimDTO> getExpenseClaimsByEmployeeId(Long employeeId) {
         employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + employeeId));
-        
+
         return expenseClaimRepository.findByEmployee_Id(employeeId)
                 .stream()
                 .map(this::convertToDTO)
@@ -82,11 +83,11 @@ public class ExpenseService {
     public ExpenseClaimDTO createExpenseClaim(Long employeeId, ExpenseClaim expenseClaim) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + employeeId));
-        
+
         expenseClaim.setEmployee(employee);
         expenseClaim.setClaimDate(LocalDate.now());
         expenseClaim.setStatus(LeaveStatus.PENDING);
-        
+
         ExpenseClaim savedClaim = expenseClaimRepository.save(expenseClaim);
         return convertToDTO(savedClaim);
     }
@@ -95,9 +96,9 @@ public class ExpenseService {
     public ExpenseClaimDTO updateExpenseClaim(Long id, ExpenseClaim expenseClaimDetails) {
         ExpenseClaim claim = expenseClaimRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Expense Claim not found with ID: " + id));
-        
+
         claim.setTotalAmount(expenseClaimDetails.getTotalAmount());
-        
+
         ExpenseClaim updatedClaim = expenseClaimRepository.save(claim);
         return convertToDTO(updatedClaim);
     }
@@ -106,9 +107,9 @@ public class ExpenseService {
     public ExpenseClaimDTO approveExpenseClaim(Long id) {
         ExpenseClaim claim = expenseClaimRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Expense Claim not found with ID: " + id));
-        
+
         claim.setStatus(LeaveStatus.APPROVED);
-        
+
         ExpenseClaim updatedClaim = expenseClaimRepository.save(claim);
         return convertToDTO(updatedClaim);
     }
@@ -117,9 +118,9 @@ public class ExpenseService {
     public ExpenseClaimDTO rejectExpenseClaim(Long id) {
         ExpenseClaim claim = expenseClaimRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Expense Claim not found with ID: " + id));
-        
+
         claim.setStatus(LeaveStatus.REJECTED);
-        
+
         ExpenseClaim updatedClaim = expenseClaimRepository.save(claim);
         return convertToDTO(updatedClaim);
     }

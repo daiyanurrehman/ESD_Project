@@ -12,12 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Lecture 4, 8: Service Layer for business logic
-@Service 
+@Service
+@SuppressWarnings("null")
 public class PayrollService {
 
     private final EmployeeRepository employeeRepository;
     private final PaySlipRepository paySlipRepository;
-    
+
     // Lecture 4: Constructor Injection (Best Practice for DI)
     @Autowired
     public PayrollService(EmployeeRepository employeeRepository, PaySlipRepository paySlipRepository) {
@@ -26,10 +27,10 @@ public class PayrollService {
     }
 
     /**
-     * Lecture 10: @Transactional ensures Atomicity (all or nothing). 
+     * Lecture 10: @Transactional ensures Atomicity (all or nothing).
      * If saving any payslip fails, the entire batch operation rolls back.
      */
-    @Transactional(rollbackFor = Exception.class) 
+    @Transactional(rollbackFor = Exception.class)
     public List<PaySlip> processMonthlyPayroll(int month, int year) {
         // 1. Fetch all eligible employees
         List<Employee> employees = employeeRepository.findAll();
@@ -44,14 +45,14 @@ public class PayrollService {
         // This is where the transaction is critical
         return paySlipRepository.saveAll(processedPaySlips);
     }
-    
+
     // Lecture 10: Read operation should be readOnly for performance
     @Transactional(readOnly = true)
     public PaySlip getPaySlipById(Long id) {
         return paySlipRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("PaySlip not found for ID: " + id));
     }
-    
+
     // --- Private Business Logic ---
     private PaySlip calculatePaySlip(Employee employee, int month, int year) {
         // Complex business logic: fetch base salary, deductions, attendance, etc.
@@ -59,21 +60,21 @@ public class PayrollService {
         double grossSalary = baseSalary; // Simplification
         double totalDeductions = baseSalary * 0.10; // Simple 10% tax deduction
         double netSalary = grossSalary - totalDeductions;
-        
+
         PaySlip paySlip = new PaySlip();
         paySlip.setEmployee(employee);
         paySlip.setPayDate(LocalDate.of(year, month, 25));
         paySlip.setGrossSalary(grossSalary);
         paySlip.setTotalDeductions(totalDeductions);
         paySlip.setNetSalary(netSalary);
-        
+
         // Add PaySlipItem (for detail)
         List<PaySlipItem> items = new ArrayList<>();
         PaySlipItem baseItem = createPaySlipItem("Base Salary", grossSalary, ItemType.EARNING, paySlip);
         PaySlipItem taxItem = createPaySlipItem("Income Tax Deduction", totalDeductions, ItemType.DEDUCTION, paySlip);
         items.add(baseItem);
         items.add(taxItem);
-        
+
         paySlip.setLineItems(items);
         return paySlip;
     }

@@ -10,19 +10,20 @@ import org.springframework.context.annotation.Bean;
 import java.time.LocalDate;
 
 // Lecture 4: Main entry point for the Spring Boot application
-@SpringBootApplication 
+@SpringBootApplication
 public class HrPayrollManagementApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(HrPayrollManagementApplication.class, args);
     }
-    
+
     // Populating initial data for testing the REST APIs and Payroll Service
     @Bean
-    public CommandLineRunner loadData(EmployeeRepository empRepo, 
-                                      DepartmentRepository deptRepo, 
-                                      JobTitleRepository jobRepo,
-                                      LeaveTypeRepository leaveTypeRepo) {
+    public CommandLineRunner loadData(EmployeeRepository empRepo,
+            DepartmentRepository deptRepo,
+            JobTitleRepository jobRepo,
+            LeaveTypeRepository leaveTypeRepo,
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         return (args) -> {
             System.out.println("--- Populating Initial Test Data ---");
 
@@ -47,13 +48,13 @@ public class HrPayrollManagementApplication {
             hrSpecialist.setTitle("HR Specialist");
             hrSpecialist.setBaseSalary(55000.00);
             jobRepo.save(hrSpecialist);
-            
+
             // 3. Create Leave Types
             LeaveType annual = new LeaveType();
             annual.setName("Annual Leave");
             annual.setDefaultDays(20);
             leaveTypeRepo.save(annual);
-            
+
             LeaveType sick = new LeaveType();
             sick.setName("Sick Leave");
             sick.setDefaultDays(10);
@@ -68,7 +69,7 @@ public class HrPayrollManagementApplication {
             emp1.setDepartment(finance); // ManyToOne mapping
             emp1.setJobTitle(dev); // ManyToOne mapping
             emp1.setUsername("alex.chen");
-            emp1.setPasswordHash("pass123");
+            emp1.setPasswordHash(passwordEncoder.encode("pass123"));
             emp1.setRole(UserRole.EMPLOYEE);
             empRepo.save(emp1);
 
@@ -80,10 +81,10 @@ public class HrPayrollManagementApplication {
             emp2.setDepartment(hr);
             emp2.setJobTitle(hrSpecialist);
             emp2.setUsername("sarah.khan");
-            emp2.setPasswordHash("pass456");
+            emp2.setPasswordHash(passwordEncoder.encode("pass456"));
             emp2.setRole(UserRole.HR_MANAGER);
             empRepo.save(emp2);
-            
+
             System.out.println("--- Test Data Loaded. Application ready on port 8080. ---");
         };
     }

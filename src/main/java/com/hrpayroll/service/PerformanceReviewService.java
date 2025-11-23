@@ -15,14 +15,15 @@ import java.util.stream.Collectors;
 
 // Lecture 9: Service for Performance Review business logic
 @Service
+@SuppressWarnings("null")
 public class PerformanceReviewService {
 
     private final PerformanceReviewRepository performanceReviewRepository;
     private final EmployeeRepository employeeRepository;
 
     @Autowired
-    public PerformanceReviewService(PerformanceReviewRepository performanceReviewRepository, 
-                                    EmployeeRepository employeeRepository) {
+    public PerformanceReviewService(PerformanceReviewRepository performanceReviewRepository,
+            EmployeeRepository employeeRepository) {
         this.performanceReviewRepository = performanceReviewRepository;
         this.employeeRepository = employeeRepository;
     }
@@ -46,7 +47,7 @@ public class PerformanceReviewService {
     public List<PerformanceReviewDTO> getReviewsByEmployeeId(Long employeeId) {
         employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + employeeId));
-        
+
         return performanceReviewRepository.findByEmployee_Id(employeeId)
                 .stream()
                 .map(this::convertToDTO)
@@ -65,10 +66,10 @@ public class PerformanceReviewService {
     public PerformanceReviewDTO createPerformanceReview(Long employeeId, PerformanceReview performanceReview) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + employeeId));
-        
+
         performanceReview.setEmployee(employee);
         performanceReview.setReviewDate(LocalDate.now());
-        
+
         PerformanceReview savedReview = performanceReviewRepository.save(performanceReview);
         return convertToDTO(savedReview);
     }
@@ -77,10 +78,10 @@ public class PerformanceReviewService {
     public PerformanceReviewDTO updatePerformanceReview(Long id, PerformanceReview performanceReviewDetails) {
         PerformanceReview review = performanceReviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Performance Review not found with ID: " + id));
-        
+
         review.setScore(performanceReviewDetails.getScore());
         review.setComments(performanceReviewDetails.getComments());
-        
+
         PerformanceReview updatedReview = performanceReviewRepository.save(review);
         return convertToDTO(updatedReview);
     }
