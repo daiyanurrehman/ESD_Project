@@ -22,22 +22,16 @@ public class AuthController {
     // POST /auth/signup - Register new HR user
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest request) {
-        try {
-            AuthResponse response = authService.signup(request);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        // Error handling is done by GlobalExceptionHandler
+        AuthResponse response = authService.signup(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     // POST /auth/login - Authenticate and get JWT token
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        try {
-            AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        // Error handling is done by GlobalExceptionHandler
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
     }
 }
