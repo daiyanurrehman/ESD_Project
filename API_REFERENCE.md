@@ -1,33 +1,191 @@
-# 📚 HR Payroll Management System - Complete API Reference
+# API Documentation
 
-**Base URL:** `http://localhost:8080/api/v1`  
-**Response Format:** JSON  
-**Authentication:** Not yet implemented
+Base URL: `http://localhost:5000`
 
----
-
-## 📋 Table of Contents
-
-1. [Employee Management API](#employee-management-api)
-2. [Performance Review API](#performance-review-api)
-3. [Expense Claims API](#expense-claims-api)
-4. [Shift Schedule API](#shift-schedule-api)
-5. [Leave Request API](#leave-request-api)
-6. [Payroll API](#payroll-api)
+- Content type: `application/json`
+- Auth: JWT for all endpoints except `/auth/**`
+- Auth header: `Authorization: Bearer <JWT>`
+- Date format: `yyyy-MM-dd`
 
 ---
 
-## 👥 Employee Management API
+## 0. Common Error Model
 
-**Base Path:** `/api/v1/employees`
-
-### 1. Get All Employees
-
-```http
-GET /api/v1/employees
+- Error schema (from `GlobalExceptionHandler`):
+```json
+{
+  "timestamp": "2025-12-04T10:15:30.123",
+  "status": 400,
+  "error": "Validation Failed",
+  "message": "Invalid input parameters",
+  "path": "/api/v1/..."
+}
 ```
 
-**Response:** `200 OK`
+---
+
+## 1. Authentication APIs
+
+Security configuration permits `/auth/**` without JWT. All other endpoints require JWT.
+
+### 1.1 POST /auth/login
+1) Endpoint Name: Login
+
+2) Full URL: `http://localhost:5000/auth/login`
+
+3) HTTP Method: POST
+
+4) Description: Authenticates user and returns a JWT token with metadata.
+
+5) Prerequisites / Auth Requirements
+- JWT token: no
+- Role checks: none
+- Headers: `Content-Type: application/json`
+
+6) Sample Request JSON Payload
+```json
+{
+  "username": "hr.manager",
+  "password": "P@ssw0rd!"
+}
+```
+
+7) Sample Response (Success)
+```json
+{
+  "token": "eyJhbGciOi...",
+  "username": "hr.manager",
+  "role": "HR_MANAGER",
+  "expiresAt": 1733692800000
+}
+```
+
+8) Sample Response (Error Cases)
+- 400 Validation Error
+```json
+{
+  "timestamp": "2025-12-04T10:15:30.123",
+  "status": 400,
+  "error": "Validation Failed",
+  "message": "Username and password are required",
+  "path": "/auth/login"
+}
+```
+- 401 Unauthorized (bad credentials)
+```json
+{
+  "timestamp": "2025-12-04T10:15:30.123",
+  "status": 401,
+  "error": "Invalid Credentials",
+  "message": "Username or password is incorrect",
+  "path": "/auth/login"
+}
+```
+- 500 Server Error
+```json
+{
+  "timestamp": "2025-12-04T10:15:30.123",
+  "status": 500,
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred. Please contact support if the problem persists.",
+  "path": "/auth/login"
+}
+```
+
+9) Edge Cases to Test
+- Missing username/password
+- Leading/trailing spaces in username
+- Locked/disabled user (if enforced in service)
+- Expired/invalid token not applicable to login
+
+10) Testing Checklist
+- Validate request body schema
+- Verify 200 response with token and role
+- Verify 401 for wrong credentials
+- Verify response headers `Content-Type: application/json`
+
+### 1.2 POST /auth/signup
+1) Endpoint Name: Signup
+
+2) Full URL: `http://localhost:5000/auth/signup`
+
+3) HTTP Method: POST
+
+4) Description: Registers a new user account and returns a token (service-dependent default role).
+
+5) Prerequisites / Auth Requirements
+- JWT token: no
+- Role checks: none
+- Headers: `Content-Type: application/json`
+
+6) Sample Request JSON Payload
+```json
+{
+  "username": "new.employee",
+  "password": "S3cure!Pass"
+}
+```
+
+7) Sample Response (Success)
+```json
+{
+  "token": "eyJhbGciOi...",
+  "username": "new.employee",
+  "role": "EMPLOYEE",
+  "expiresAt": 1733692800000
+}
+```
+
+8) Sample Response (Error Cases)
+- 409 Conflict (duplicate username)
+```json
+{
+  "timestamp": "2025-12-04T10:15:30.123",
+  "status": 409,
+  "error": "Data Integrity Violation",
+  "message": "A record with this information already exists.",
+  "path": "/auth/signup"
+}
+```
+- 400 Validation Error / 500 Server Error as per common model
+
+9) Edge Cases to Test
+- Duplicate username
+- Weak password (if validated in service)
+- Long usernames / unicode
+
+10) Testing Checklist
+- Validate request shape
+- Verify account is created
+- Verify token returned
+- Verify cannot create duplicate usernames
+
+---
+
+## 2. Employee APIs
+
+Base Path: `/api/v1/employees`
+
+All endpoints below require JWT. No role-level restrictions are enforced in `SecurityConfig` (any authenticated user). Business rules may still be applied in services.
+
+### 2.1 GET /api/v1/employees
+1) Endpoint Name: List Employees
+
+2) Full URL: `http://localhost:5000/api/v1/employees`
+
+3) Method: GET
+
+4) Description: Returns all employees.
+
+5) Prerequisites
+- JWT token: yes
+- Role checks: none (any authenticated)
+- Headers: `Authorization: Bearer <JWT>`
+
+6) Sample Request Query
+No body. Optional future filters could be added.
+
+7) Sample Response (Success)
 ```json
 [
   {
@@ -37,48 +195,42 @@ GET /api/v1/employees
     "lastName": "Doe",
     "dateOfBirth": "1990-05-15",
     "hireDate": "2020-01-10",
-    "department": {
-      "id": 1,
-      "name": "IT"
-    },
-    "jobTitle": {
-      "id": 1,
-      "title": "Senior Developer",
-      "baseSalary": 75000
-    }
-  },
-  {
-    "id": 2,
-    "username": "jane.smith",
-    "firstName": "Jane",
-    "lastName": "Smith",
-    "dateOfBirth": "1992-03-20",
-    "hireDate": "2021-06-15",
-    "department": {
-      "id": 2,
-      "name": "HR"
-    },
-    "jobTitle": {
-      "id": 2,
-      "title": "HR Manager",
-      "baseSalary": 65000
-    }
+    "department": { "id": 1, "name": "IT" },
+    "jobTitle": { "id": 1, "title": "Senior Developer", "baseSalary": 75000.0 }
   }
 ]
 ```
 
-### 2. Get Employee by ID
+8) Sample Response (Error)
+- 401 Unauthorized if missing/invalid JWT
 
-```http
-GET /api/v1/employees/{id}
-```
+9) Edge Cases to Test
+- Empty dataset
+- Large dataset
+- Lazy-loaded relations serialization
 
-**Path Parameters:**
-- `id` (Long) - Employee ID
+10) Testing Checklist
+- 200 with JSON array
+- Each item has expected fields
+- 401 when token missing/invalid
 
-**Example:** `GET /api/v1/employees/1`
+### 2.2 GET /api/v1/employees/{id}
+1) Endpoint Name: Get Employee By Id
 
-**Response:** `200 OK`
+2) Full URL: `http://localhost:5000/api/v1/employees/1`
+
+3) Method: GET
+
+4) Description: Returns a single employee by id.
+
+5) Prerequisites
+- JWT token: yes
+- Role checks: none
+
+6) Sample Request
+No body
+
+7) Sample Response (Success)
 ```json
 {
   "id": 1,
@@ -87,44 +239,54 @@ GET /api/v1/employees/{id}
   "lastName": "Doe",
   "dateOfBirth": "1990-05-15",
   "hireDate": "2020-01-10",
-  "department": {
-    "id": 1,
-    "name": "IT"
-  },
-  "jobTitle": {
-    "id": 1,
-    "title": "Senior Developer",
-    "baseSalary": 75000
-  }
+  "department": { "id": 1, "name": "IT" },
+  "jobTitle": { "id": 1, "title": "Senior Developer", "baseSalary": 75000.0 }
 }
 ```
 
-### 3. Create New Employee
+8) Error Cases
+- 404 Not Found if id missing
+- 401 Unauthorized without token
 
-```http
-POST /api/v1/employees
-Content-Type: application/json
-```
+9) Edge Cases
+- Non-numeric id
+- Id exists but user lacks access (not enforced here)
 
-**Request Body:**
+10) Checklist
+- 200 for existing id
+- 404 for missing id
+- 401 without JWT
+
+### 2.3 POST /api/v1/employees
+1) Endpoint Name: Create Employee
+
+2) Full URL: `http://localhost:5000/api/v1/employees`
+
+3) Method: POST
+
+4) Description: Creates a new employee account/profile.
+
+5) Prerequisites
+- JWT token: yes
+- Role checks: none (recommend ADMIN/HR_MANAGER)
+- Headers: `Content-Type: application/json`
+
+6) Sample Request JSON Payload
 ```json
 {
   "username": "alex.wilson",
-  "password": "SecurePassword123",
+  "passwordHash": "$2a$10$hashedValueHere",
+  "role": "EMPLOYEE",
   "firstName": "Alex",
   "lastName": "Wilson",
   "dateOfBirth": "1995-07-22",
   "hireDate": "2023-01-15",
-  "department": {
-    "id": 1
-  },
-  "jobTitle": {
-    "id": 1
-  }
+  "department": { "id": 1 },
+  "jobTitle": { "id": 1 }
 }
 ```
 
-**Response:** `201 CREATED`
+7) Sample Response (Success)
 ```json
 {
   "id": 3,
@@ -133,46 +295,51 @@ Content-Type: application/json
   "lastName": "Wilson",
   "dateOfBirth": "1995-07-22",
   "hireDate": "2023-01-15",
-  "department": {
-    "id": 1,
-    "name": "IT"
-  },
-  "jobTitle": {
-    "id": 1,
-    "title": "Senior Developer",
-    "baseSalary": 75000
-  }
+  "department": { "id": 1, "name": "IT" },
+  "jobTitle": { "id": 1, "title": "Senior Developer", "baseSalary": 75000.0 }
 }
 ```
 
-### 4. Update Employee
+8) Error Cases
+- 400 invalid dates or missing fields
+- 409 unique username conflict
 
-```http
-PUT /api/v1/employees/{id}
-Content-Type: application/json
-```
+9) Edge Cases
+- Department/jobTitle id not existing
+- Username casing/trim
 
-**Path Parameters:**
-- `id` (Long) - Employee ID
+10) Checklist
+- Validate required fields
+- 201 with created record
+- 409 for duplicate username
+- Verify DB insert
 
-**Request Body:**
+### 2.4 PUT /api/v1/employees/{id}
+1) Endpoint Name: Update Employee
+
+2) Full URL: `http://localhost:5000/api/v1/employees/1`
+
+3) Method: PUT
+
+4) Description: Updates an existing employee.
+
+5) Prerequisites
+- JWT token: yes
+- Role checks: none (recommend ADMIN/HR_MANAGER)
+
+6) Sample Request JSON Payload
 ```json
 {
-  "username": "john.doe",
   "firstName": "John",
   "lastName": "Doe",
   "dateOfBirth": "1990-05-15",
   "hireDate": "2020-01-10",
-  "department": {
-    "id": 2
-  },
-  "jobTitle": {
-    "id": 2
-  }
+  "department": { "id": 2 },
+  "jobTitle": { "id": 2 }
 }
 ```
 
-**Response:** `200 OK`
+7) Sample Response (Success)
 ```json
 {
   "id": 1,
@@ -181,222 +348,644 @@ Content-Type: application/json
   "lastName": "Doe",
   "dateOfBirth": "1990-05-15",
   "hireDate": "2020-01-10",
-  "department": {
-    "id": 2,
-    "name": "HR"
-  },
-  "jobTitle": {
-    "id": 2,
-    "title": "HR Manager",
-    "baseSalary": 65000
-  }
+  "department": { "id": 2, "name": "HR" },
+  "jobTitle": { "id": 2, "title": "HR Manager", "baseSalary": 65000.0 }
 }
 ```
 
-### 5. Delete Employee
+8) Error Cases
+- 404 if id not found
+- 400 invalid payload
 
-```http
-DELETE /api/v1/employees/{id}
-```
+9) Edge Cases
+- Changing department/jobTitle to non-existent entities
 
-**Path Parameters:**
-- `id` (Long) - Employee ID
+10) Checklist
+- 200 on success
+- Verify DB update
+- 404 for missing id
 
-**Response:** `204 NO CONTENT`
+### 2.5 DELETE /api/v1/employees/{id}
+1) Endpoint Name: Delete Employee
+
+2) Full URL: `http://localhost:5000/api/v1/employees/1`
+
+3) Method: DELETE
+
+4) Description: Deletes an employee.
+
+5) Prerequisites
+- JWT token: yes
+- Role checks: none (recommend ADMIN/HR_MANAGER)
+
+6) Request: none
+
+7) Response (Success)
+- 204 No Content
+
+8) Error Cases
+- 404 Not Found
+
+9) Edge Cases
+- Deleting employee referenced by other tables
+
+10) Checklist
+- 204 on success
+- Verify cascades/constraints
+- 404 for missing id
 
 ---
 
-## ⭐ Performance Review API
+## 3. Leave APIs
 
-**Base Path:** `/api/v1/performance-reviews`
+Base Path: `/api/v1/leave`
 
-### 1. Get All Performance Reviews
+### 3.1 POST /api/v1/leave/{employeeId}/request
+1) Endpoint Name: Apply for Leave
 
-```http
-GET /api/v1/performance-reviews
+2) Full URL: `http://localhost:5000/api/v1/leave/1/request`
+
+3) Method: POST
+
+4) Description: Employee submits a leave request.
+
+5) Prerequisites
+- JWT token: yes
+- Role checks: none (recommend EMPLOYEE to create; approval by HR_MANAGER)
+
+6) Sample Request JSON Payload
+```json
+{
+  "startDate": "2025-01-10",
+  "endDate": "2025-01-14",
+  "durationDays": 5,
+  "reason": "Family trip",
+  "status": "PENDING",
+  "leaveType": { "id": 1 }
+}
 ```
 
-**Response:** `200 OK`
+7) Sample Response (Success)
+```json
+{
+  "id": 10,
+  "employee": { "id": 1 },
+  "startDate": "2025-01-10",
+  "endDate": "2025-01-14",
+  "durationDays": 5,
+  "reason": "Family trip",
+  "status": "PENDING",
+  "leaveType": { "id": 1 }
+}
+```
+
+8) Error Cases
+- 400 invalid date range
+- 404 employee/leaveType not found
+
+9) Edge Cases
+- Overlapping leaves
+- Negative/zero durationDays
+
+10) Checklist
+- 201 created
+- Validate date logic
+- Verify DB insert
+
+### 3.2 GET /api/v1/leave/pending
+1) Endpoint Name: List Pending Leave Requests
+
+2) Full URL: `http://localhost:5000/api/v1/leave/pending`
+
+3) Method: GET
+
+4) Description: Returns leave requests with status PENDING.
+
+5) Prerequisites
+- JWT token: yes
+- Role checks: none (recommend HR_MANAGER)
+
+6) Request: none
+
+7) Response (Success)
 ```json
 [
-  {
-    "id": 1,
-    "employeeName": "John Doe",
-    "reviewerName": "Jane Smith",
-    "rating": 4,
-    "comments": "Excellent performance, great team player",
-    "reviewDate": "2024-11-10",
-    "department": "IT"
-  },
-  {
-    "id": 2,
-    "employeeName": "Jane Smith",
-    "reviewerName": "John Doe",
-    "rating": 5,
-    "comments": "Outstanding leadership qualities",
-    "reviewDate": "2024-11-12",
-    "department": "HR"
-  }
+  { "id": 10, "status": "PENDING", "employee": { "id": 1 }, "startDate": "2025-01-10", "endDate": "2025-01-14" }
 ]
 ```
 
-### 2. Get Performance Review by ID
+8) Error Cases
+- 401 Unauthorized
 
-```http
-GET /api/v1/performance-reviews/{id}
-```
+9) Edge Cases
+- Empty list
 
-**Path Parameters:**
-- `id` (Long) - Performance Review ID
+10) Checklist
+- 200 array response
+- 401 without token
 
-**Example:** `GET /api/v1/performance-reviews/1`
+### 3.3 PUT /api/v1/leave/{requestId}/status?status=APPROVED|REJECTED|PENDING
+1) Endpoint Name: Update Leave Status
 
-**Response:** `200 OK`
+2) Full URL: `http://localhost:5000/api/v1/leave/10/status?status=APPROVED`
+
+3) Method: PUT
+
+4) Description: Approve or reject a leave request.
+
+5) Prerequisites
+- JWT token: yes
+- Role checks: none (recommend HR_MANAGER)
+
+6) Request: no body (uses query param `status`)
+
+7) Response (Success)
 ```json
 {
-  "id": 1,
+  "id": 10,
+  "status": "APPROVED",
+  "employee": { "id": 1 },
+  "startDate": "2025-01-10",
+  "endDate": "2025-01-14"
+}
+```
+
+8) Error Cases
+- 400 invalid status value
+- 404 requestId not found
+
+9) Edge Cases
+- Idempotency: repeating same status
+
+10) Checklist
+- 200 on success
+- 400 for invalid enum
+- Verify DB update
+
+---
+
+## 4. Expense APIs
+
+Base Path: `/api/v1/expenses`
+
+### 4.1 GET /api/v1/expenses
+1) Endpoint Name: List Expense Claims
+
+2) URL: `http://localhost:5000/api/v1/expenses`
+3) Method: GET
+4) Description: Returns all expense claims (DTO).
+5) Prerequisites: JWT yes; roles none.
+6) Request: none
+7) Success
+```json
+[
+  {
+    "id": 101,
+    "employeeName": "John Doe",
+    "description": "Conference travel",
+    "totalAmount": 350.75,
+    "status": "PENDING",
+    "category": "Travel",
+    "submissionDate": "2025-01-05",
+    "approvalDate": null,
+    "approverName": null
+  }
+]
+```
+8) Errors: 401
+9) Edge Cases: empty list; large list
+10) Checklist: 200 array; 401 without token
+
+### 4.2 GET /api/v1/expenses/{id}
+1) Endpoint Name: Get Expense Claim
+
+2) URL: `http://localhost:5000/api/v1/expenses/101`
+3) Method: GET
+4) Description: Returns a single expense claim (DTO).
+5) Prerequisites: JWT yes
+6) Request: none
+7) Success
+```json
+{
+  "id": 101,
   "employeeName": "John Doe",
-  "reviewerName": "Jane Smith",
-  "rating": 4,
-  "comments": "Excellent performance, great team player",
-  "reviewDate": "2024-11-10",
-  "department": "IT"
+  "description": "Conference travel",
+  "totalAmount": 350.75,
+  "status": "PENDING",
+  "category": "Travel",
+  "submissionDate": "2025-01-05",
+  "approvalDate": null,
+  "approverName": null
 }
 ```
+8) Errors: 404, 401
+9) Edge Cases: id that exists but belongs to another employee (not restricted in config)
+10) Checklist: 200/404/401
 
-### 3. Get Reviews by Employee ID
+### 4.3 GET /api/v1/expenses/employee/{employeeId}
+1) Endpoint Name: List Claims by Employee
 
-```http
-GET /api/v1/performance-reviews/employee/{employeeId}
-```
+2) URL: `http://localhost:5000/api/v1/expenses/employee/1`
+3) Method: GET
+4) Description: Returns all claims for given employee.
+5) Prerequisites: JWT yes
+6) Request: none
+7) Success: `[ExpenseClaimDTO,...]`
+8) Errors: 404 if employee not found
+9) Edge: empty for employee with no claims
+10) Checklist: 200 array, 404, 401
 
-**Path Parameters:**
-- `employeeId` (Long) - Employee ID
+### 4.4 GET /api/v1/expenses/status/pending
+1) Endpoint Name: List Pending Claims (All)
 
-**Example:** `GET /api/v1/performance-reviews/employee/1`
+2) URL: `http://localhost:5000/api/v1/expenses/status/pending`
+3) Method: GET
+4) Description: Returns pending claims.
+5) Prerequisites: JWT yes (recommend HR_MANAGER)
+6) Request: none
+7) Success: `[ExpenseClaimDTO,...]`
+8) Errors: 401
+9) Edge: empty list
+10) Checklist: 200 array
 
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "employeeName": "John Doe",
-    "reviewerName": "Jane Smith",
-    "rating": 4,
-    "comments": "Excellent performance, great team player",
-    "reviewDate": "2024-11-10",
-    "department": "IT"
-  },
-  {
-    "id": 3,
-    "employeeName": "John Doe",
-    "reviewerName": "Jane Smith",
-    "rating": 4,
-    "comments": "Good progress on project",
-    "reviewDate": "2024-08-15",
-    "department": "IT"
-  }
-]
-```
+### 4.5 GET /api/v1/expenses/date-range?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+1) Endpoint Name: List Claims by Date Range
 
-### 4. Get Reviews by Date Range
+2) URL: `http://localhost:5000/api/v1/expenses/date-range?startDate=2025-01-01&endDate=2025-01-31`
+3) Method: GET
+4) Description: Returns claims submitted between dates.
+5) Prerequisites: JWT yes
+6) Request: query params as shown
+7) Success: `[ExpenseClaimDTO,...]`
+8) Errors: 400 invalid dates; 401
+9) Edge: endDate before startDate
+10) Checklist: 200 array; validate dates
 
-```http
-GET /api/v1/performance-reviews/employee/{employeeId}/date-range?startDate={startDate}&endDate={endDate}
-```
+### 4.6 POST /api/v1/expenses/employee/{employeeId}
+1) Endpoint Name: Create Expense Claim
 
-**Path Parameters:**
-- `employeeId` (Long) - Employee ID
-
-**Query Parameters:**
-- `startDate` (String, format: yyyy-MM-dd) - Start date
-- `endDate` (String, format: yyyy-MM-dd) - End date
-
-**Example:** 
-```
-GET /api/v1/performance-reviews/employee/1/date-range?startDate=2024-01-01&endDate=2024-12-31
-```
-
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "employeeName": "John Doe",
-    "reviewerName": "Jane Smith",
-    "rating": 4,
-    "comments": "Excellent performance, great team player",
-    "reviewDate": "2024-11-10",
-    "department": "IT"
-  }
-]
-```
-
-### 5. Create Performance Review
-
-```http
-POST /api/v1/performance-reviews/employee/{employeeId}
-Content-Type: application/json
-```
-
-**Path Parameters:**
-- `employeeId` (Long) - Employee ID
-
-**Request Body:**
+2) URL: `http://localhost:5000/api/v1/expenses/employee/1`
+3) Method: POST
+4) Description: Creates a new expense claim for an employee.
+5) Prerequisites: JWT yes (recommend EMPLOYEE)
+6) Sample Request JSON Payload
 ```json
 {
-  "reviewerName": "Jane Smith",
-  "score": 4,
-  "comments": "Excellent performance, great team player",
-  "reviewDate": "2024-11-10"
+  "claimDate": "2025-01-05",
+  "totalAmount": 350.75,
+  "status": "PENDING",
+  "items": [
+    {
+      "description": "Flight to conference",
+      "amount": 250.50,
+      "category": { "id": 1 }
+    },
+    {
+      "description": "Hotel",
+      "amount": 100.25,
+      "category": { "id": 1 }
+    }
+  ]
 }
 ```
-
-**Response:** `201 CREATED`
+7) Success
 ```json
 {
-  "id": 4,
+  "id": 201,
   "employeeName": "John Doe",
-  "reviewerName": "Jane Smith",
-  "rating": 4,
-  "comments": "Excellent performance, great team player",
-  "reviewDate": "2024-11-10",
-  "department": "IT"
+  "description": "Flight to conference; Hotel",
+  "totalAmount": 350.75,
+  "status": "PENDING",
+  "category": "Travel",
+  "submissionDate": "2025-01-05",
+  "approvalDate": null,
+  "approverName": null
 }
 ```
+8) Errors: 400 invalid item/category; 404 employee not found; 401
+9) Edge: items empty; negative amounts; category missing
+10) Checklist: 201 created; totals correct; DB insert and items linked
 
-### 6. Update Performance Review
+### 4.7 PUT /api/v1/expenses/{id}
+1) Endpoint Name: Update Expense Claim
 
-```http
-PUT /api/v1/performance-reviews/{id}
-Content-Type: application/json
-```
-
-**Path Parameters:**
-- `id` (Long) - Performance Review ID
-
-**Request Body:**
+2) URL: `http://localhost:5000/api/v1/expenses/201`
+3) Method: PUT
+4) Description: Updates an expense claim.
+5) Prerequisites: JWT yes
+6) Request JSON
 ```json
 {
-  "reviewerName": "Jane Smith",
+  "claimDate": "2025-01-06",
+  "totalAmount": 360.00
+}
+```
+7) Success: `ExpenseClaimDTO`
+8) Errors: 404, 400, 401
+9) Edge: reducing total below sum(items)
+10) Checklist: 200 on success; DB update
+
+### 4.8 PUT /api/v1/expenses/{id}/approve
+1) Endpoint Name: Approve Expense Claim
+
+2) URL: `http://localhost:5000/api/v1/expenses/201/approve`
+3) Method: PUT
+4) Description: Approves a pending claim.
+5) Prerequisites: JWT yes (recommend HR_MANAGER)
+6) Request: none
+7) Success: updated `ExpenseClaimDTO` with status
+8) Errors: 404, 409 already approved/rejected, 401
+9) Edge: Approval of non-pending claim
+10) Checklist: 200 and status updated; idempotency
+
+### 4.9 PUT /api/v1/expenses/{id}/reject
+1) Endpoint Name: Reject Expense Claim
+
+2) URL: `http://localhost:5000/api/v1/expenses/201/reject`
+3) Method: PUT
+4) Description: Rejects a pending claim.
+5) Prerequisites: JWT yes (recommend HR_MANAGER)
+6) Request: none
+7) Success: updated `ExpenseClaimDTO` with status
+8) Errors: 404, 409 already approved/rejected, 401
+9) Edge: rejection reason (if maintained)
+10) Checklist: 200 and status updated
+
+### 4.10 DELETE /api/v1/expenses/{id}
+1) Endpoint Name: Delete Expense Claim
+
+2) URL: `http://localhost:5000/api/v1/expenses/201`
+3) Method: DELETE
+4) Description: Deletes a claim.
+5) Prerequisites: JWT yes
+6) Request: none
+7) Success: 204 No Content
+8) Errors: 404, 401
+9) Edge: deleting with items
+10) Checklist: 204; DB delete and cascade
+
+---
+
+## 5. Payroll APIs
+
+Base Path: `/api/v1/payroll`
+
+### 5.1 POST /api/v1/payroll/process?month={m}&year={y}
+1) Endpoint Name: Process Monthly Payroll
+
+2) URL: `http://localhost:5000/api/v1/payroll/process?month=11&year=2025`
+3) Method: POST
+4) Description: Generates monthly payslips for all employees.
+5) Prerequisites: JWT yes (recommend ADMIN/HR_MANAGER)
+6) Request: query params `month` (1-12), `year` (YYYY)
+7) Success
+```json
+[
+  {
+    "id": 501,
+    "employee": { "id": 1 },
+    "payDate": "2025-11-30",
+    "grossSalary": 75000.0,
+    "totalDeductions": 5000.0,
+    "netSalary": 70000.0,
+    "lineItems": []
+  }
+]
+```
+8) Errors: 400 invalid month/year; 401
+9) Edge: duplicate processing for same month
+10) Checklist: 201/200 as implemented (controller returns 201); DB inserts created
+
+### 5.2 GET /api/v1/payroll/payslips/{id}
+1) Endpoint Name: Get Payslip
+
+2) URL: `http://localhost:5000/api/v1/payroll/payslips/501`
+3) Method: GET
+4) Description: Returns a payslip by id.
+5) Prerequisites: JWT yes
+6) Request: none
+7) Success: `PaySlip` JSON structure as above
+8) Errors: 404, 401
+9) Edge: accessing other employee’s payslip (not restricted in config)
+10) Checklist: 200/404/401
+
+---
+
+## 6. Performance Review APIs
+
+Base Path: `/api/v1/performance-reviews`
+
+### 6.1 GET /api/v1/performance-reviews
+1) Name: List Reviews
+2) URL: `http://localhost:5000/api/v1/performance-reviews`
+3) Method: GET
+4) Description: Returns all reviews (DTO)
+5) JWT: yes
+6) Request: none
+7) Success: `[PerformanceReviewDTO,...]`
+8) Errors: 401
+9) Edge: empty list
+10) Checklist: 200 array
+
+### 6.2 GET /api/v1/performance-reviews/{id}
+1) Name: Get Review
+2) URL: `http://localhost:5000/api/v1/performance-reviews/1`
+3) Method: GET
+4) Description: Single review (DTO)
+5) JWT: yes
+6) Request: none
+7) Success: `PerformanceReviewDTO`
+8) Errors: 404, 401
+9) Edge: id format
+10) Checklist: 200/404
+
+### 6.3 GET /api/v1/performance-reviews/employee/{employeeId}
+1) Name: Reviews by Employee
+2) URL: `http://localhost:5000/api/v1/performance-reviews/employee/1`
+3) Method: GET
+4) Description: All reviews for employee (DTO)
+5) JWT: yes
+6) Request: none
+7) Success: array of DTO
+8) Errors: 404 employee not found
+9) Edge: empty
+10) Checklist: 200 array
+
+### 6.4 GET /api/v1/performance-reviews/employee/{employeeId}/date-range
+1) Name: Reviews by Date Range
+2) URL: `http://localhost:5000/api/v1/performance-reviews/employee/1/date-range?startDate=2025-01-01&endDate=2025-12-31`
+3) Method: GET
+4) Description: Reviews within given dates
+5) JWT: yes
+6) Request: query params `startDate`, `endDate`
+7) Success: array of DTO
+8) Errors: 400 invalid dates; 401
+9) Edge: end before start
+10) Checklist: 200 array
+
+### 6.5 POST /api/v1/performance-reviews/employee/{employeeId}
+1) Name: Create Review
+2) URL: `http://localhost:5000/api/v1/performance-reviews/employee/1`
+3) Method: POST
+4) Description: Creates a performance review (entity as request, DTO as response)
+5) JWT: yes (recommend MANAGER/HR)
+6) Request JSON
+```json
+{
+  "reviewDate": "2025-02-01",
+  "score": 4.5,
+  "comments": "Consistent delivery and collaboration"
+}
+```
+7) Success: `PerformanceReviewDTO`
+8) Errors: 404 employee not found; 400 invalid fields; 401
+9) Edge: duplicate date for same employee
+10) Checklist: 201 created; DB insert
+
+### 6.6 PUT /api/v1/performance-reviews/{id}
+1) Name: Update Review
+2) URL: `http://localhost:5000/api/v1/performance-reviews/10`
+3) Method: PUT
+4) Description: Updates a review
+5) JWT: yes
+6) Request JSON
+```json
+{
+  "reviewDate": "2025-03-01",
   "score": 5,
-  "comments": "Updated review - Exceptional performance",
-  "reviewDate": "2024-11-10"
+  "comments": "Promotion recommended"
 }
 ```
+7) Success: DTO
+8) Errors: 404, 400
+9) Edge: score bounds
+10) Checklist: 200; DB update
 
-**Response:** `200 OK`
+### 6.7 DELETE /api/v1/performance-reviews/{id}
+1) Name: Delete Review
+2) URL: `http://localhost:5000/api/v1/performance-reviews/10`
+3) Method: DELETE
+4) Description: Deletes a review
+5) JWT: yes
+6) Request: none
+7) Success: 204
+8) Errors: 404
+9) Edge: cascading goals
+10) Checklist: 204; DB delete
+
+---
+
+## 7. Shift APIs
+
+Base Path: `/api/v1/shifts`
+
+### 7.1 GET /api/v1/shifts
+1) Name: List Shifts
+2) URL: `http://localhost:5000/api/v1/shifts`
+3) Method: GET
+4) Description: Returns all shifts (DTO)
+5) JWT: yes
+6) Request: none
+7) Success: `[ShiftScheduleDTO,...]`
+8) Errors: 401
+9) Edge: empty list
+10) Checklist: 200 array
+
+### 7.2 GET /api/v1/shifts/{id}
+1) Name: Get Shift
+2) URL: `http://localhost:5000/api/v1/shifts/1`
+3) Method: GET
+4) Description: One shift (DTO)
+5) JWT: yes
+6) Request: none
+7) Success: `ShiftScheduleDTO`
+8) Errors: 404, 401
+9) Edge: id format
+10) Checklist: 200/404
+
+### 7.3 GET /api/v1/shifts/search/name?name=Day
+1) Name: Search Shifts by Name
+2) URL: `http://localhost:5000/api/v1/shifts/search/name?name=Day`
+3) Method: GET
+4) Description: Returns shifts with matching name
+5) JWT: yes
+6) Request: query `name`
+7) Success: array DTO
+8) Errors: 401
+9) Edge: case sensitivity
+10) Checklist: 200 array
+
+### 7.4 GET /api/v1/shifts/search/time?startTime=09:00&endTime=17:00
+1) Name: Search Shifts by Time Range
+2) URL: `http://localhost:5000/api/v1/shifts/search/time?startTime=09:00&endTime=17:00`
+3) Method: GET
+4) Description: Returns shifts within a time range
+5) JWT: yes
+6) Request: query `startTime`, `endTime`
+7) Success: array DTO
+8) Errors: 400 invalid times; 401
+9) Edge: boundary times
+10) Checklist: 200 array
+
+### 7.5 POST /api/v1/shifts
+1) Name: Create Shift
+2) URL: `http://localhost:5000/api/v1/shifts`
+3) Method: POST
+4) Description: Creates a shift schedule
+5) JWT: yes (recommend ADMIN/HR_MANAGER)
+6) Request JSON
 ```json
 {
-  "id": 1,
-  "employeeName": "John Doe",
-  "reviewerName": "Jane Smith",
-  "rating": 5,
-  "comments": "Updated review - Exceptional performance",
-  "reviewDate": "2024-11-10",
-  "department": "IT"
+  "name": "Day Shift",
+  "startTime": "09:00",
+  "endTime": "17:00"
 }
 ```
+7) Success: `ShiftScheduleDTO`
+8) Errors: 400 invalid time range; 409 duplicate name
+9) Edge: start >= end
+10) Checklist: 201 created; DB insert
+
+### 7.6 PUT /api/v1/shifts/{id}
+1) Name: Update Shift
+2) URL: `http://localhost:5000/api/v1/shifts/1`
+3) Method: PUT
+4) Description: Updates a shift
+5) JWT: yes
+6) Request JSON
+```json
+{
+  "name": "Evening Shift",
+  "startTime": "12:00",
+  "endTime": "20:00"
+}
+```
+7) Success: DTO
+8) Errors: 404, 400
+9) Edge: overlapping shifts policy (if any)
+10) Checklist: 200; DB update
+
+### 7.7 DELETE /api/v1/shifts/{id}
+1) Name: Delete Shift
+2) URL: `http://localhost:5000/api/v1/shifts/1`
+3) Method: DELETE
+4) Description: Deletes a shift
+5) JWT: yes
+6) Request: none
+7) Success: 204
+8) Errors: 404
+9) Edge: assigned employees
+10) Checklist: 204; DB delete
+
+---
+
+## 8. Additional Notes
+
+- Auth: As per `SecurityConfig`, only `/auth/**` is public. All other endpoints require a valid JWT. No role-based restrictions are enforced at the security layer; apply role checks in services/controllers if needed (e.g., HR_MANAGER approves leaves and expenses).
+- Headers: Always send `Authorization: Bearer <JWT>` for secured routes.
+- Port: The app runs on port `5000` (`server.port=5000`).
+- Error handling: Centralized via `GlobalExceptionHandler` with consistent JSON error structure.
+
 
 ### 7. Delete Performance Review
 

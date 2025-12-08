@@ -65,11 +65,11 @@ public class GlobalExceptionHandler {
     }
     
     /**
-     * Handle AuthenticationException
+     * Handle custom AuthenticationException (from com.hrpayroll.exception)
      */
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(
-            AuthenticationException ex, HttpServletRequest request) {
+    @ExceptionHandler(com.hrpayroll.exception.AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleCustomAuthenticationException(
+            com.hrpayroll.exception.AuthenticationException ex, HttpServletRequest request) {
         logger.error("Authentication error: {}", ex.getMessage());
         
         ErrorResponse errorResponse = new ErrorResponse(
