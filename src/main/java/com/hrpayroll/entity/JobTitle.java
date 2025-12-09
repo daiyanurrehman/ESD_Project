@@ -1,5 +1,6 @@
 package com.hrpayroll.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
@@ -18,5 +19,6 @@ public class JobTitle {
     private Double baseSalary; // Base for payroll calculation
     
     @OneToMany(mappedBy = "jobTitle")
+    @JsonIgnore // prevent recursive serialization
     private List<Employee> employees;
 }

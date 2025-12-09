@@ -1,5 +1,6 @@
 package com.hrpayroll.service;
 
+import com.hrpayroll.dto.LeaveRequestDTO;
 import com.hrpayroll.entity.Employee;
 import com.hrpayroll.entity.LeaveRequest;
 import com.hrpayroll.entity.LeaveStatus;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @SuppressWarnings("null")
@@ -41,7 +43,7 @@ public class LeaveService {
 
     // Lecture 10: Atomic transaction for submitting and validation leave
     @Transactional
-    public LeaveRequest applyForLeave(Long employeeId, LeaveRequest request) {
+    public LeaveRequestDTO applyForLeave(Long employeeId, LeaveRequest request) {
         try {
             // Validate input
             if (employeeId == null) {
@@ -93,7 +95,8 @@ public class LeaveService {
             request.setStatus(LeaveStatus.PENDING); // Initial status
 
             try {
-                return leaveRequestRepository.save(request);
+                LeaveRequest saved = leaveRequestRepository.save(request);
+                return toDTO(saved);
             } catch (DataAccessException e) {
                 logger.error("Error saving leave request", e);
                 throw new DatabaseException("Failed to save leave request", e);
@@ -108,7 +111,7 @@ public class LeaveService {
 
     // Lecture 10: Atomic transaction for status change
     @Transactional
-    public LeaveRequest updateLeaveStatus(Long requestId, LeaveStatus status) {
+    public LeaveRequestDTO updateLeaveStatus(Long requestId, LeaveStatus status) {
         try {
             if (requestId == null) {
                 throw new ValidationException("Leave request ID cannot be null");
@@ -133,7 +136,8 @@ public class LeaveService {
             // record.
 
             try {
-                return leaveRequestRepository.save(request);
+                LeaveRequest saved = leaveRequestRepository.save(request);
+                return toDTO(saved);
             } catch (DataAccessException e) {
                 logger.error("Error updating leave request status", e);
                 throw new DatabaseException("Failed to update leave request status", e);
@@ -148,12 +152,15 @@ public class LeaveService {
 
     // Lecture 10: Read operation
     @Transactional(readOnly = true)
-    public List<LeaveRequest> getRequestsByStatus(LeaveStatus status) {
+    public List<LeaveRequestDTO> getRequestsByStatus(LeaveStatus status) {
         try {
             if (status == null) {
                 throw new ValidationException("Leave status cannot be null");
             }
-            return leaveRequestRepository.findByStatus(status);
+            return leaveRequestRepository.findByStatus(status)
+                    .stream()
+                    .map(this::toDTO)
+                    .collect(Collectors.toList());
         } catch (ValidationException e) {
             throw e;
         } catch (DataAccessException e) {
@@ -163,5 +170,24 @@ public class LeaveService {
             logger.error("Unexpected error retrieving leave requests", e);
             throw new DatabaseException("An unexpected error occurred while retrieving leave requests", e);
         }
+    }
+
+    private LeaveRequestDTO toDTO(LeaveRequest request) {
+        if (request == null) {
+            return null;
+        }
+        LeaveRequestDTO dto = new LeaveRequestDTO();
+        dto.setId(request.getId());
+        dto.setEmployeeName(request.getEmployee() != null
+                ? request.getEmployee().getFirstName() + " " + request.getEmployee().getLastName()
+                : null);
+        dto.setLeaveType(request.getLeaveType() != null ? request.getLeaveType().getName() : null);
+        dto.setNumberOfDays(request.getDurationDays());
+        dto.setStatus(request.getStatus() != null ? request.getStatus().name() : null);
+        dto.setReason(request.getReason());
+        dto.setStartDate(request.getStartDate());
+        dto.setEndDate(request.getEndDate());
+        dto.setRequestDate(null); // not tracked; placeholder
+        return dto;
     }
 }

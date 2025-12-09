@@ -1,5 +1,6 @@
 package com.hrpayroll.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
@@ -19,5 +20,6 @@ public class Department {
     
     // @OneToMany on the 'one' side, mappedBy ensures bidirectional mapping
     @OneToMany(mappedBy = "department")
+    @JsonIgnore // prevent recursive serialization
     private List<Employee> employees;
 }

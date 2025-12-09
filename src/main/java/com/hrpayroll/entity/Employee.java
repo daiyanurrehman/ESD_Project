@@ -1,5 +1,7 @@
 package com.hrpayroll.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,22 +25,27 @@ public class Employee extends UserAccount {
     // Lecture 6-7: @ManyToOne Relationship
     @ManyToOne(fetch = FetchType.LAZY) 
     @JoinColumn(name = "department_id", nullable = false)
+    @JsonIgnoreProperties("employees") // prevent recursive serialization
     private Department department;
 
     // Lecture 6-7: @ManyToOne Relationship
     @ManyToOne(fetch = FetchType.LAZY) 
     @JoinColumn(name = "job_title_id", nullable = false)
+    @JsonIgnoreProperties("employees") // prevent recursive serialization
     private JobTitle jobTitle;
     
     // Lecture 6-7: @OneToMany Relationship
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @JsonIgnore // avoid looping back to employee
     private List<LeaveRequest> leaveRequests;
     
     // Lecture 6-7: @OneToMany Relationship
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @JsonIgnore // avoid looping back to employee
     private List<PaySlip> paySlips;
     
     // Lecture 6-7: @OneToMany Relationship
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @JsonIgnore // avoid looping back to employee
     private List<Attendance> attendanceRecords;
 }

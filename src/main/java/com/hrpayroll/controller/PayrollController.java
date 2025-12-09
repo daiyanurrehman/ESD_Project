@@ -1,6 +1,6 @@
 package com.hrpayroll.controller;
 
-import com.hrpayroll.entity.PaySlip;
+import com.hrpayroll.dto.PaySlipDTO;
 import com.hrpayroll.service.PayrollService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,11 +27,11 @@ public class PayrollController {
      * Access via Postman: POST http://localhost:8080/api/v1/payroll/process?month=11&year=2024
      */
     @PostMapping("/process")
-    public ResponseEntity<List<PaySlip>> processPayroll(
+    public ResponseEntity<List<PaySlipDTO>> processPayroll(
             @RequestParam int month, // Lecture 8: @RequestParam for query parameters
             @RequestParam int year) {
 
-        List<PaySlip> paySlips = payrollService.processMonthlyPayroll(month, year);
+        List<PaySlipDTO> paySlips = payrollService.processMonthlyPayroll(month, year);
         // Lecture 5: ResponseEntity to control status code (201 CREATED)
         return new ResponseEntity<>(paySlips, HttpStatus.CREATED); 
     }
@@ -42,8 +42,8 @@ public class PayrollController {
      * Access via Postman: GET http://localhost:8080/api/v1/payroll/payslips/1
      */
     @GetMapping("/payslips/{id}")
-    public ResponseEntity<PaySlip> getPaySlip(@PathVariable Long id) {
-        PaySlip paySlip = payrollService.getPaySlipById(id);
+    public ResponseEntity<PaySlipDTO> getPaySlip(@PathVariable Long id) {
+        PaySlipDTO paySlip = payrollService.getPaySlipById(id);
         return ResponseEntity.ok(paySlip); // Lecture 5: Returns 200 OK
     }
 }

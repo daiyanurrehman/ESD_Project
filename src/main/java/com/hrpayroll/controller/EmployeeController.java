@@ -1,5 +1,6 @@
 package com.hrpayroll.controller;
 
+import com.hrpayroll.dto.EmployeeDTO;
 import com.hrpayroll.entity.Employee;
 import com.hrpayroll.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,32 +24,32 @@ public class EmployeeController {
 
     // Lecture 5: GET /api/v1/employees (Read All)
     @GetMapping
-    public ResponseEntity<List<Employee>> getAllEmployees() {
+    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
         // Lecture 8: Service Layer delegates to Repository
-        List<Employee> employees = employeeService.findAllEmployees();
+        List<EmployeeDTO> employees = employeeService.findAllEmployees();
         return ResponseEntity.ok(employees);
     }
     
     // Lecture 5: GET /api/v1/employees/{id} (Read One)
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
-        Employee employee = employeeService.findEmployeeById(id);
+    public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
+        EmployeeDTO employee = employeeService.findEmployeeById(id);
         return ResponseEntity.ok(employee);
     }
 
     // Lecture 5: POST /api/v1/employees (Create)
     @PostMapping
-    public ResponseEntity<Employee> createEmployee(@RequestBody Employee employee) {
-        Employee newEmployee = employeeService.saveEmployee(employee);
+    public ResponseEntity<EmployeeDTO> createEmployee(@RequestBody Employee employee) {
+        EmployeeDTO newEmployee = employeeService.saveEmployee(employee);
         // Lecture 5: Returns 201 CREATED status
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
     }
 
     // Lecture 5: PUT /api/v1/employees/{id} (Update/Replace)
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable Long id, @RequestBody Employee employeeDetails) {
+    public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable Long id, @RequestBody Employee employeeDetails) {
         // Validation and update logic is handled in the Service layer
-        Employee updatedEmployee = employeeService.updateEmployee(id, employeeDetails);
+        EmployeeDTO updatedEmployee = employeeService.updateEmployee(id, employeeDetails);
         return ResponseEntity.ok(updatedEmployee);
     }
 

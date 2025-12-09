@@ -1,5 +1,6 @@
 package com.hrpayroll.service;
 
+import com.hrpayroll.dto.EmployeeDTO;
 import com.hrpayroll.entity.Employee;
 import com.hrpayroll.exception.DatabaseException;
 import com.hrpayroll.exception.ResourceNotFoundException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 // Lecture 4: @Service for employee management business logic
 @Service
@@ -31,9 +33,12 @@ public class EmployeeService {
 
     // Lecture 10: Read operation for performance optimization
     @Transactional(readOnly = true)
-    public List<Employee> findAllEmployees() {
+    public List<EmployeeDTO> findAllEmployees() {
         try {
-            return employeeRepository.findAll();
+            return employeeRepository.findAll()
+                    .stream()
+                    .map(this::toDTO)
+                    .collect(Collectors.toList());
         } catch (DataAccessException e) {
             logger.error("Error retrieving all employees", e);
             throw new DatabaseException("Failed to retrieve employees", e);
@@ -45,13 +50,14 @@ public class EmployeeService {
 
     // Lecture 10: Read operation
     @Transactional(readOnly = true)
-    public Employee findEmployeeById(Long id) {
+    public EmployeeDTO findEmployeeById(Long id) {
         try {
             if (id == null) {
                 throw new ValidationException("Employee ID cannot be null");
             }
-            return employeeRepository.findById(id)
+            Employee employee = employeeRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+            return toDTO(employee);
         } catch (ResourceNotFoundException | ValidationException e) {
             throw e;
         } catch (DataAccessException e) {
@@ -65,7 +71,7 @@ public class EmployeeService {
 
     // Lecture 10: Write operation
     @Transactional
-    public Employee saveEmployee(Employee employee) {
+    public EmployeeDTO saveEmployee(Employee employee) {
         try {
             // Validation logic
             if (employee == null) {
@@ -77,8 +83,8 @@ public class EmployeeService {
             if (employee.getLastName() == null || employee.getLastName().trim().isEmpty()) {
                 throw new ValidationException("Employee last name is required");
             }
-            
-            return employeeRepository.save(employee);
+            Employee saved = employeeRepository.save(employee);
+            return toDTO(saved);
         } catch (ValidationException e) {
             throw e;
         } catch (DataAccessException e) {
@@ -92,7 +98,7 @@ public class EmployeeService {
 
     // Lecture 10: Write operation - Ensures update is atomic
     @Transactional
-    public Employee updateEmployee(Long id, Employee employeeDetails) {
+    public EmployeeDTO updateEmployee(Long id, Employee employeeDetails) {
         try {
             if (id == null) {
                 throw new ValidationException("Employee ID cannot be null");
@@ -101,7 +107,9 @@ public class EmployeeService {
                 throw new ValidationException("Employee details cannot be null");
             }
             
-            Employee employee = findEmployeeById(id);
+            // Fetch existing entity
+            Employee employee = employeeRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
             // Update fields (example of partial update/PUT logic)
             if (employeeDetails.getFirstName() != null) {
@@ -116,8 +124,8 @@ public class EmployeeService {
             if (employeeDetails.getJobTitle() != null) {
                 employee.setJobTitle(employeeDetails.getJobTitle());
             }
-
-            return employeeRepository.save(employee);
+            Employee updated = employeeRepository.save(employee);
+            return toDTO(updated);
         } catch (ResourceNotFoundException | ValidationException e) {
             throw e;
         } catch (DataAccessException e) {
@@ -152,5 +160,23 @@ public class EmployeeService {
             logger.error("Unexpected error deleting employee with ID: {}", id, e);
             throw new DatabaseException("An unexpected error occurred while deleting employee", e);
         }
+    }
+
+    // Mapping helper
+    private EmployeeDTO toDTO(Employee employee) {
+        if (employee == null) {
+            return null;
+        }
+        EmployeeDTO dto = new EmployeeDTO();
+        dto.setId(employee.getId());
+        dto.setFirstName(employee.getFirstName());
+        dto.setLastName(employee.getLastName());
+        dto.setUsername(employee.getUsername());
+        dto.setDepartmentName(employee.getDepartment() != null ? employee.getDepartment().getName() : null);
+        dto.setJobTitle(employee.getJobTitle() != null ? employee.getJobTitle().getTitle() : null);
+        dto.setHireDate(employee.getHireDate());
+        dto.setDateOfBirth(employee.getDateOfBirth());
+        dto.setRole(employee.getRole() != null ? employee.getRole().name() : null);
+        return dto;
     }
 }

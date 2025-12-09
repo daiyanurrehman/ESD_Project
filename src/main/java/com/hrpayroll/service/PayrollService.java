@@ -1,5 +1,7 @@
 package com.hrpayroll.service;
 
+import com.hrpayroll.dto.PaySlipDTO;
+import com.hrpayroll.dto.PaySlipItemDTO;
 import com.hrpayroll.entity.*;
 import com.hrpayroll.exception.DatabaseException;
 import com.hrpayroll.exception.ResourceNotFoundException;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // Lecture 4, 8: Service Layer for business logic
 @Service
@@ -39,7 +42,7 @@ public class PayrollService {
      * If saving any payslip fails, the entire batch operation rolls back.
      */
     @Transactional(rollbackFor = Exception.class)
-    public List<PaySlip> processMonthlyPayroll(int month, int year) {
+    public List<PaySlipDTO> processMonthlyPayroll(int month, int year) {
         try {
             // Validate input
             if (month < 1 || month > 12) {
@@ -78,7 +81,10 @@ public class PayrollService {
             // 2. Save all generated payslips to the database
             // This is where the transaction is critical
             try {
-                return paySlipRepository.saveAll(processedPaySlips);
+                return paySlipRepository.saveAll(processedPaySlips)
+                        .stream()
+                        .map(this::toDTO)
+                        .collect(Collectors.toList());
             } catch (DataAccessException e) {
                 logger.error("Error saving payslips to database", e);
                 throw new DatabaseException("Failed to save payslips", e);
@@ -93,13 +99,14 @@ public class PayrollService {
 
     // Lecture 10: Read operation should be readOnly for performance
     @Transactional(readOnly = true)
-    public PaySlip getPaySlipById(Long id) {
+    public PaySlipDTO getPaySlipById(Long id) {
         try {
             if (id == null) {
                 throw new ValidationException("PaySlip ID cannot be null");
             }
-            return paySlipRepository.findById(id)
+            PaySlip paySlip = paySlipRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("PaySlip", "id", id));
+            return toDTO(paySlip);
         } catch (ResourceNotFoundException | ValidationException e) {
             throw e;
         } catch (DataAccessException e) {
@@ -161,5 +168,30 @@ public class PayrollService {
         item.setType(type);
         item.setPaySlip(paySlip);
         return item;
+    }
+
+    private PaySlipDTO toDTO(PaySlip paySlip) {
+        if (paySlip == null) {
+            return null;
+        }
+        PaySlipDTO dto = new PaySlipDTO();
+        dto.setId(paySlip.getId());
+        dto.setEmployeeId(paySlip.getEmployee() != null ? paySlip.getEmployee().getId() : null);
+        dto.setEmployeeName(paySlip.getEmployee() != null
+                ? paySlip.getEmployee().getFirstName() + " " + paySlip.getEmployee().getLastName()
+                : null);
+        dto.setPayDate(paySlip.getPayDate());
+        dto.setGrossSalary(paySlip.getGrossSalary());
+        dto.setTotalDeductions(paySlip.getTotalDeductions());
+        dto.setNetSalary(paySlip.getNetSalary());
+        if (paySlip.getLineItems() != null) {
+            dto.setItems(paySlip.getLineItems().stream()
+                    .map(li -> new PaySlipItemDTO(
+                            li.getDescription(),
+                            li.getAmount(),
+                            li.getType() != null ? li.getType().name() : null))
+                    .collect(Collectors.toList()));
+        }
+        return dto;
     }
 }
