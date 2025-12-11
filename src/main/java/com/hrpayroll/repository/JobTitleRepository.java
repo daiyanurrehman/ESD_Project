@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface JobTitleRepository extends JpaRepository<JobTitle, Long> {
     // Find job title by its specific title name
     JobTitle findByTitle(String title);
+    boolean existsByTitle(String title);
 }

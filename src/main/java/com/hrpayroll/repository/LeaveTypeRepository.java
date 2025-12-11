@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface LeaveTypeRepository extends JpaRepository<LeaveType, Long> {
     // Find a leave type by its name (e.g., "Annual")
     LeaveType findByName(String name);
+    boolean existsByName(String name);
 }

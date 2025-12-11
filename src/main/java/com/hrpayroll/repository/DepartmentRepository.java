@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface DepartmentRepository extends JpaRepository<Department, Long> {
     // Find department by name (used for lookups)
     Department findByName(String name);
+    boolean existsByName(String name);
 }

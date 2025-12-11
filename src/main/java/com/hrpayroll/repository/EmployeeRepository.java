@@ -16,4 +16,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     
     // Finds employees by their job title's name (Nested Property Query - Lecture 8)
     List<Employee> findByJobTitle_Title(String jobTitle);
+
+    // Ensure unique username for idempotent seed
+    boolean existsByUsername(String username);
 }
