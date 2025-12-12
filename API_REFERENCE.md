@@ -1599,6 +1599,329 @@ PUT /api/v1/leave/1/status?status=APPROVED
 
 ---
 
+## 🏢 Department API
+
+**Base Path:** `/api/v1/departments`
+
+### 1. Get All Departments
+
+```http
+GET /api/v1/departments
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "name": "Human Resources",
+    "description": "Manages employee relations and benefits"
+  },
+  {
+    "id": 2,
+    "name": "IT",
+    "description": "Information Technology department"
+  },
+  {
+    "id": 3,
+    "name": "Finance",
+    "description": "Financial planning and accounting"
+  }
+]
+```
+
+### 2. Get Department by ID
+
+```http
+GET /api/v1/departments/{id}
+```
+
+**Path Parameters:**
+- `id` (Long) - Department ID
+
+**Example:** `GET /api/v1/departments/1`
+
+**Response:** `200 OK`
+```json
+{
+  "id": 1,
+  "name": "Human Resources",
+  "description": "Manages employee relations and benefits"
+}
+```
+
+### 3. Create Department
+
+```http
+POST /api/v1/departments
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "name": "Sales",
+  "description": "Sales and business development"
+}
+```
+
+**Response:** `201 CREATED`
+```json
+{
+  "id": 4,
+  "name": "Sales",
+  "description": "Sales and business development"
+}
+```
+
+### 4. Update Department
+
+```http
+PUT /api/v1/departments/{id}
+Content-Type: application/json
+```
+
+**Path Parameters:**
+- `id` (Long) - Department ID
+
+**Request Body:**
+```json
+{
+  "name": "Sales & Marketing",
+  "description": "Sales, marketing and business development"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "id": 4,
+  "name": "Sales & Marketing",
+  "description": "Sales, marketing and business development"
+}
+```
+
+### 5. Delete Department
+
+```http
+DELETE /api/v1/departments/{id}
+```
+
+**Path Parameters:**
+- `id` (Long) - Department ID
+
+**Response:** `204 NO CONTENT`
+
+---
+
+## 💼 Job Title API
+
+**Base Path:** `/api/v1/job-titles`
+
+### 1. Get All Job Titles
+
+```http
+GET /api/v1/job-titles
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "title": "Senior Developer",
+    "baseSalary": 75000.00
+  },
+  {
+    "id": 2,
+    "title": "HR Manager",
+    "baseSalary": 65000.00
+  },
+  {
+    "id": 3,
+    "title": "Financial Analyst",
+    "baseSalary": 60000.00
+  }
+]
+```
+
+### 2. Get Job Title by ID
+
+```http
+GET /api/v1/job-titles/{id}
+```
+
+**Path Parameters:**
+- `id` (Long) - Job Title ID
+
+**Example:** `GET /api/v1/job-titles/1`
+
+**Response:** `200 OK`
+```json
+{
+  "id": 1,
+  "title": "Senior Developer",
+  "baseSalary": 75000.00
+}
+```
+
+### 3. Create Job Title
+
+```http
+POST /api/v1/job-titles
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "title": "DevOps Engineer",
+  "baseSalary": 70000.00
+}
+```
+
+**Response:** `201 CREATED`
+```json
+{
+  "id": 4,
+  "title": "DevOps Engineer",
+  "baseSalary": 70000.00
+}
+```
+
+### 4. Update Job Title
+
+```http
+PUT /api/v1/job-titles/{id}
+Content-Type: application/json
+```
+
+**Path Parameters:**
+- `id` (Long) - Job Title ID
+
+**Request Body:**
+```json
+{
+  "title": "Senior DevOps Engineer",
+  "baseSalary": 80000.00
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "id": 4,
+  "title": "Senior DevOps Engineer",
+  "baseSalary": 80000.00
+}
+```
+
+### 5. Delete Job Title
+
+```http
+DELETE /api/v1/job-titles/{id}
+```
+
+**Path Parameters:**
+- `id` (Long) - Job Title ID
+
+**Response:** `204 NO CONTENT`
+
+---
+
+## 🕐 Attendance API
+
+**Base Path:** `/api/v1/attendance`
+
+### 1. Record Check-In
+
+```http
+POST /api/v1/attendance/employee/{employeeId}/check-in
+Content-Type: application/json
+```
+
+**Path Parameters:**
+- `employeeId` (Long) - Employee ID
+
+**Request Body:**
+```json
+{
+  "checkInTime": "08:30:00",
+  "checkOutTime": null,
+  "hoursWorked": 0.0,
+  "status": "PRESENT"
+}
+```
+
+**Response:** `201 CREATED`
+```json
+{
+  "id": 1,
+  "employee": {
+    "id": 1,
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "workDate": "2024-12-12",
+  "checkInTime": "08:30:00",
+  "checkOutTime": null,
+  "hoursWorked": 0.0,
+  "status": "PRESENT"
+}
+```
+
+### 2. Get Attendance by Date Range
+
+```http
+GET /api/v1/attendance/employee/{employeeId}?startDate={startDate}&endDate={endDate}
+```
+
+**Path Parameters:**
+- `employeeId` (Long) - Employee ID
+
+**Query Parameters:**
+- `startDate` (String, format: yyyy-MM-dd) - Start date
+- `endDate` (String, format: yyyy-MM-dd) - End date
+
+**Example:**
+```
+GET /api/v1/attendance/employee/1?startDate=2024-12-01&endDate=2024-12-31
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "employee": {
+      "id": 1,
+      "firstName": "John",
+      "lastName": "Doe"
+    },
+    "workDate": "2024-12-01",
+    "checkInTime": "08:30:00",
+    "checkOutTime": "17:00:00",
+    "hoursWorked": 8.5,
+    "status": "PRESENT"
+  },
+  {
+    "id": 2,
+    "employee": {
+      "id": 1,
+      "firstName": "John",
+      "lastName": "Doe"
+    },
+    "workDate": "2024-12-02",
+    "checkInTime": "08:45:00",
+    "checkOutTime": "17:15:00",
+    "hoursWorked": 8.5,
+    "status": "PRESENT"
+  }
+]
+```
+
+---
+
 ## 💳 Payroll API
 
 **Base Path:** `/api/v1/payroll`
